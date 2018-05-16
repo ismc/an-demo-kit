@@ -1,0 +1,4 @@
+---
+- name: Apply template {{ template_file }}
+  ios_config:
+    src: "{{ template_file }}"

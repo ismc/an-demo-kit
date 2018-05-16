@@ -1,0 +1,85 @@
+---
+- hosts: control_hosts
+  gather_facts: no
+  tasks:
+    - debug: var=hostvars
+
+    - set_fact:
+        control_host: "{{ groups.control_hosts[0] }}"
+
+    - set_fact:
+        tower_api_endpoint: "{{ hostvars[control_host].ansible_host }}"
+        tower_api_username: labuser
+        tower_api_password: "{{ cloud_password }}"
+        validate_certs: no
+
+    - include_role:
+        name: tower-api
+        tasks_from: users
+      vars:
+        validate_certs: no
+        tower_api_in_username: scarter
+        tower_api_in_password: "{{ cloud_password }}"
+      run_once: yes
+
+    - include_role:
+        name: tower-api
+        tasks_from: credentials
+      vars:
+        validate_certs: no
+        tower_api_in_name: git
+        tower_api_in_credential_type: 2
+        tower_api_in_organization: 1
+        tower_api_in_ssh_key_data: "{{ lookup('file', '~/.ssh/id_rsa') }}"
+      run_once: yes
+
+    - include_role:
+        name: tower-api
+        tasks_from: credentials
+      vars:
+        validate_certs: no
+        tower_api_in_name: tower
+        tower_api_in_credential_type: 1
+        tower_api_in_organization: 1
+        tower_api_in_ssh_key_data: "{{ lookup('file', '~/.ssh/id_rsa') }}"
+      run_once: yes
+
+        - name: Add tower demo repo
+          command: tower-cli project create --name an-demos --scm-type git --scm-url git@localhost:/home/git/an-demos.git --scm-credential git
+          become_user: "{{ demo_username }}"
+
+    - include_role:
+        name: tower_api
+        tasks_from: inventories
+      vars:
+        tower_api_inventory_name: an-demos
+      run_once: yes
+    #
+    # - include_role:
+    #     name: tower_api
+    #     tasks_from: hosts
+    #   vars:
+    #     validate_certs: no
+    #     tower_api_inventory_name: "{{ cloud_project }}"
+    #     tower_api_host_name: "{{ item }}"
+    #     tower_api_host_vars:
+    #       ansible_host: "{{ hostvars[item].ansible_host }}"
+    #       ansible_user: "{{ hostvars[item].ansible_user }}"
+    #       ansible_network_os: "{{ hostvars[item].ansible_network_os | default(omit) }}"
+    #       interfaces: "{{ hostvars[item].interfaces }}"
+    #   with_items: "{{ groups.all }}"
+    #
+    # - include_role:
+    #     name: tower_api
+    #     tasks_from: groups
+    #   vars:
+    #     validate_certs: no
+    #     tower_api_inventory_name: "{{ cloud_project }}"
+    #     tower_api_group_name: "{{ item.key }}"
+    #     tower_api_group_members: "{{ item.value }}"
+    #   with_dict: "{{ groups }}"
+    #   when: item.key != 'all'
+    #   run_once: yes
+    #
+    # - debug: var=tower_api_group_map
+    # - debug: var=tower_api_host_map

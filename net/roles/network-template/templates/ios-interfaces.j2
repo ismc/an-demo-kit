@@ -1,0 +1,8 @@
+{% for network_interface_item in network_interface_list %}
+interface {{ interface_item.name }}
+{% if network_interface_item.description is defined %}
+ description {{ interface_item.description }}
+{% endif %}
+{% if network_interface_item.ip is defined %}
+ ip address {{ interface_item.ip | ipaddr('ipaddress') }} netmask {{ interface_item.ip | ipaddr('netmask') }}
+{% endif %}

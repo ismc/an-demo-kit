@@ -1,0 +1,10 @@
+---
+- hosts: network
+  connection: network_cli
+  gather_facts: no
+
+  tasks:
+    - include_role:
+        name: network_users
+      vars:
+        - network_user_list: "{{ network_users }}"

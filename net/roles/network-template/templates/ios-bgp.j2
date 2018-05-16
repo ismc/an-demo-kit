@@ -1,0 +1,11 @@
+router bgp {{ bgp_asn }}
+{% if bgp_router_id %}
+ bgp router-id {{ bgp_router_id }}
+{% for bgp_neighbor_item in bgp_neighbor_list|default([]) %}
+ neighbor {{ bgp_neighbor_item.ip }} remote-as {{ bgp_neighbor_item.asn }}
+{% endfor %}
+{% endif %}
+ address-family ipv4
+{% for bgp_network_item in bgp_network_list|default([]) %}
+  network {{ bgp_network_item.network }} mask {{ bgp_network_item.mask }}
+{% endfor %}

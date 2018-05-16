@@ -1,0 +1,8 @@
+---
+- include_tasks: "networks.yml"
+
+# - meta: end_play
+
+- include_tasks: "instances.yml"
+  vars:
+    cloud_instance_data: "{{ cloud_vpc_data.instances | default([]) }}"

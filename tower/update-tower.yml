@@ -1,0 +1,165 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    model_dir: "{{ playbook_dir }}/models"
+    inventory_root: "{{ playbook_dir }}/inventory"
+    key_root: "{{ playbook_dir }}/keys"
+    cloud_instance: "{{ cloud_model.split('.')[0] }}"
+    cloud_project: "{{ lookup('env','USER') }}"
+    cloud_provider: 'aws'
+    cloud_region: 'us-east-1'
+    cloud_user: ec2-user
+    cloud_name: "{{ cloud_instance }}.{{ cloud_project }}"
+    cloud_key_name: "{{ opt_key_name | default(cloud_project) }}"
+    cloud_private_key_file: "{{ key_root }}/{{ cloud_key_name }}.key"
+    cloud_public_key_file: "{{ key_root }}/{{ cloud_key_name }}.key.pub"
+    cloud_inventory_file: "{{ inventory_root }}/{{ cloud_project }}/hosts.yml"
+    cloud_vars_file: "{{ inventory_root }}/{{ cloud_project }}/all-vars.yml"
+    cloud_password: "Ansibull{{ lookup('password', '/dev/null chars=digits length=4') }}"
+    cloud_cidr: '10.1.0.0/16'
+    cloud_instance_name_depth: 2
+    cloud_state: present
+    interfaces_in_inventory: no
+    default_group_vars:
+      ios:
+        ansible_network_os: ios
+        ansible_connection: network_cli
+      junos:
+        ansible_network_os: junos
+        ansible_connection: netconf
+
+  tasks:
+    - assert:
+        that:
+          - cloud_model is defined
+        msg: "You must specify a model, e.g. -e 'cloud_model=csr-lab1.yml'"
+
+    - set_fact:
+        cloud_provider: "{{ opt_provider_region.split('/')[0] }}"
+        cloud_region: "{{ opt_provider_region.split('/')[1] }}"
+      when: opt_provider_region is defined
+
+    - name: Check to see if cloud_inventory file exists
+      stat:
+        path: "{{ cloud_inventory_file }}"
+      register: stat_results
+
+    - name: Read in the existing vars file
+      include_vars:
+        file: "{{ cloud_inventory_file }}"
+        name: cloud_inventory
+      when: stat_results.stat.exists
+
+    - name: Set cloud_password to previously generated value
+      set_fact:
+        cloud_password: "{{ cloud_inventory.all.vars.cloud_password }}"
+      when: cloud_inventory is defined
+
+    - name: Find the cloud model
+      set_fact:
+        cloud_model_file: "{{ item }}"
+      with_first_found:
+        - files:
+            - "{{ cloud_model }}.yml"
+            - "{{ cloud_model }}.yaml"
+            - "{{ cloud_model }}"
+          paths:
+            - "{{ model_dir }}"
+            - "{{ playbook_dir }}"
+            - "{{ inventory_dir }}"
+
+    - name: Read in the Cloud Model {{ cloud_model }}
+      include_vars:
+        file: "{{ cloud_model_file }}"
+
+    - set_fact:
+        host_interfaces_dict: {}
+        host_inventory_dict: {}
+        group_inventory_dict: {}
+        cloud_group_list: []
+      tags:
+        - facts
+
+    - include_role:
+        name: cloud-facts
+      vars:
+        - cloud_vpc_name: "{{ vpc_item.name }}"
+        - cloud_vpc_data: "{{ vpc_item }}"
+      with_items: "{{ vpc_list | default([]) }}"
+      loop_control:
+        loop_var: vpc_item
+      delegate_to: localhost
+      run_once: yes
+      tags:
+        - facts
+
+    - name: Create cloud_vars
+      set_fact:
+        cloud_vars:
+          cloud_project: "{{ cloud_project }}"
+          cloud_user: "{{ cloud_user }}"
+          cloud_key_name: "{{ cloud_key_name }}"
+          cloud_password: "{{ cloud_password }}"
+          ansible_ssh_private_key_file: "{{ cloud_private_key_file }}"
+      tags:
+        - facts
+
+    - debug: var=cloud_inventory
+
+    - set_fact:
+        control_host: "{{ cloud_inventory.all.children.control_hosts.hosts.keys()[0] }}"
+
+    - set_fact:
+        tower_api_endpoint: "{{ cloud_inventory.all.hosts[control_host].ansible_host }}"
+        tower_api_username: labuser
+        tower_api_password: "{{ cloud_password }}"
+        validate_certs: no
+
+    - debug: var=cloud_inventory
+    - debug: var=host_inventory_dict
+    - debug: var=host_interfaces_dict
+
+    - name: Build the list of groups
+      set_fact:
+        cloud_group_list: "{{ cloud_group_list + item.value.groups.split(',') }}"
+      with_dict: "{{ host_inventory_dict }}"
+
+    - debug: var=cloud_group_list
+
+    - include_role:
+        name: tower-api
+        tasks_from: inventories
+      vars:
+        tower_api_inventory_name: "{{ cloud_project }}"
+      run_once: yes
+
+    - block:
+      - include_role:
+          name: tower-api
+          tasks_from: groups
+        vars:
+          validate_certs: no
+          tower_api_inventory_name: "{{ cloud_project }}"
+          tower_api_group_name: "{{ item }}"
+        with_items: "{{ cloud_group_list | unique }}"
+        when: item != 'all'
+      when: cloud_state == 'present'
+
+    - include_role:
+        name: tower-api
+        tasks_from: hosts
+      vars:
+        validate_certs: no
+        tower_api_inventory_name: "{{ cloud_project }}"
+        tower_api_host_name: "{{ item.key }}"
+        tower_api_host_groups: "{{ item.value.groups.split(',') }}"
+        tower_api_cloud_state: "{{ cloud_state }}"
+        tower_api_host_vars:
+          ansible_host: "{{ item.value.ansible_host }}"
+          ansible_user: "{{ item.value.ansible_user }}"
+          ansible_network_os: "{{ item.value.ansible_network_os | default(omit) }}"
+          ansible_connection: "{{ item.value.ansible_connection | default(omit) }}"
+          interfaces: "{{ host_interfaces_dict[item.key] }}"
+      with_dict: "{{ host_inventory_dict }}"

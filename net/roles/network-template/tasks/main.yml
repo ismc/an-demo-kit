@@ -1,0 +1,4 @@
+---
+- set_fact:
+    template_file: "{{ ansible_network_os }}-{{ network_template }}.j2"
+- include_tasks: "{{ ansible_network_os }}-template.yml"

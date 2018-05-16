@@ -1,0 +1,12 @@
+---
+- set_fact:
+    cloud_state: 'present'
+  when: cloud_state is not defined
+
+- include_tasks: "{{ cloud_vpc_data.provider }}-template.yml"
+  vars:
+    cloud_network_data: "{{ cloud_vpc_data.networks | default([]) }}"
+    cloud_security_group_data: "{{ cloud_acls | default([]) }}"
+    cloud_instance_data: "{{ vpc_item.instances | default([]) }}"
+  tags:
+    - networks

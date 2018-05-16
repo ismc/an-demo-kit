@@ -1,0 +1,63 @@
+---
+- name: Download Ansible Tower
+  unarchive:
+    src: "http://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-{{ ansible_tower_version }}.tar.gz"
+    remote_src: yes
+    dest: "{{ ansible_tower_tmp }}"
+    creates: "{{ ansible_tower_tmp }}/ansible-tower-setup-{{ ansible_tower_version }}/setup.sh"
+
+- name: Create inventory file
+  template:
+    src: inventory.j2
+    dest: "{{ ansible_tower_tmp }}/ansible-tower-setup-{{ ansible_tower_version }}/inventory"
+  become: yes
+  become_user: root
+
+- name: Execute installation
+  command: './setup.sh'
+  args:
+    chdir: "{{ ansible_tower_tmp }}/ansible-tower-setup-{{ ansible_tower_version }}"
+  become: yes
+  become_user: root
+
+#--------------------------------------------------
+# Install tower-cli
+#--------------------------------------------------
+# - name: Install tower-cli
+#
+#   pip:
+#     name: "{{ item }}"
+#     state: latest
+#   become: yes
+#   become_user: root
+#   with_items:
+#     - "ansible-tower-cli==3.1.8"
+#
+# - name: Create /etc/tower/tower_cli.cfg
+#   template:
+#     src: tower_cli.cfg.j2
+#     dest: /etc/tower/tower_cli.cfg
+#   become: yes
+#   become_user: root
+
+#--------------------------------------------------
+# Add License
+#--------------------------------------------------
+
+- name: Install Tower license
+  copy:
+    src: "{{ item }}"
+    dest: /etc/tower/license
+    owner: awx
+    group: awx
+    mode: 0600
+  become: yes
+  become_user: root
+  with_first_found:
+    - files:
+        - ansible_tower.lic
+        - tower.lic
+      paths:
+        - "{{ playbook_dir }}"
+        - "{{ playbook_dir }}/licenses"
+      skip: True
