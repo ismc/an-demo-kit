@@ -61,7 +61,7 @@
           file:
             path: "{{ key_root }}"
             state: directory
-            mode: 0777
+            mode: 0755
 
         - name: Generate SSH keys
           shell: ssh-keygen -b 2048 -t rsa -f "{{ cloud_private_key_file }}" -I "{{ cloud_name }}" -q -N ""
