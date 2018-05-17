@@ -17,9 +17,30 @@ pipeline {
                 }
             }
         }
-        stage('Test') {
+        stage('Run Playbooks') {
             steps {
-                echo 'Testing...'
+                echo 'Wait for the Routers to come up...'
+                ansiblePlaybook colorized: true, disableHostKeyChecking: true, inventory: 'inventory/scarter-jenkins', playbook: 'common/check-ssh.yml'
+            }
+            steps {
+                echo 'Running network-system.yml...'
+                ansiblePlaybook colorized: true, disableHostKeyChecking: true, inventory: 'inventory/scarter-jenkins', playbook: 'net/network-system.yml'
+            }
+            steps {
+                echo 'Running network-security.yml...'
+                ansiblePlaybook colorized: true, disableHostKeyChecking: true, inventory: 'inventory/scarter-jenkins', playbook: 'net/network-security.yml'
+            }
+            steps {
+                echo 'Running network-interfaces.yml...'
+                ansiblePlaybook colorized: true, disableHostKeyChecking: true, inventory: 'inventory/scarter-jenkins', playbook: 'net/network-interfaces.yml'
+            }
+            steps {
+                echo 'Running network-ipsec-vpn.yml...'
+                ansiblePlaybook colorized: true, disableHostKeyChecking: true, inventory: 'inventory/scarter-jenkins', playbook: 'net/network-ipsec-vpn.yml'
+            }
+            steps {
+                echo 'Running network-bgp.yml...'
+                ansiblePlaybook colorized: true, disableHostKeyChecking: true, inventory: 'inventory/scarter-jenkins', playbook: 'net/network-bgp.yml'
             }
         }
         stage('Destroy Cloud') {
