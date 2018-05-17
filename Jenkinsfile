@@ -12,7 +12,7 @@ pipeline {
             steps {
                 echo 'Building Cloud...'
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'Ansible (scarter)']]) {
-                  ansiblePlaybook colorized: true, disableHostKeyChecking: true, extras: 'cloud_model=an-demo1,cloud_project=scarter-jenkins', playbook: 'build-demo.yml'
+                  ansiblePlaybook colorized: true, disableHostKeyChecking: true, extras: '-e cloud_model=an-demo1 -e cloud_project=scarter-jenkins', playbook: 'build-demo.yml'
                   sh 'env'
                 }
             }
