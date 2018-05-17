@@ -20,7 +20,7 @@ pipeline {
         stage('Run Playbooks') {
             steps {
                 echo 'Wait for the Routers to come up...'
-                ansiblePlaybook colorized: true, disableHostKeyChecking: true, inventory: 'inventory/scarter-jenkins', playbook: 'common/check-ssh.yml'
+                ansiblePlaybook colorized: true, limit: 'network', disableHostKeyChecking: true, inventory: 'inventory/scarter-jenkins', playbook: 'common/check-ssh.yml'
 
                 echo 'Running network-system.yml...'
                 ansiblePlaybook colorized: true, disableHostKeyChecking: true, inventory: 'inventory/scarter-jenkins', playbook: 'net/network-system.yml'
