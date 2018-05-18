@@ -7,7 +7,6 @@ pipeline {
                 echo 'Building Cloud...'
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'Ansible (scarter)']]) {
                   ansiblePlaybook colorized: true, disableHostKeyChecking: true, extras: '-e cloud_model=an-demo1 -e cloud_project=scarter-jenkins', playbook: 'build-demo.yml'
-                  sh 'env'
                 }
             }
         }
@@ -40,8 +39,7 @@ pipeline {
         always {
             echo 'Destroying Cloud...'
             withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'Ansible (scarter)']]) {
-              ansiblePlaybook colorized: true, disableHostKeyChecking: true, extras: '-e cloud_model=an-demo1 -e cloud_project=scarter-jenkins', playbook: 'build-demo.yml'
-              sh 'env'
+              ansiblePlaybook colorized: true, disableHostKeyChecking: true, extras: '-e cloud_model=an-demo1 -e cloud_project=scarter-jenkins', playbook: 'destroy-demo.yml'
             }
             echo 'Cleaning Workspace...'
             deleteDir()
