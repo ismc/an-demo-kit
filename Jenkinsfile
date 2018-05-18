@@ -2,12 +2,6 @@ pipeline {
     agent any
 
     stages {
-        stage('Cloning Repo') {
-            steps {
-                echo 'Cloning Repo...'
-                git 'https://github.com/ismc/an-demo-kit'
-            }
-        }
         stage('Build Cloud') {
             steps {
                 echo 'Building Cloud...'
