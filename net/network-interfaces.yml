@@ -10,6 +10,11 @@
       when: item.ip | ipaddr
       with_items: "{{ interfaces }}"
 
+    - name: Create loopback interface
+      net_interface:
+        name: Loopback0
+        enabled: True
+
     # - name: Add interfaces to the VRF
     #   net_vrf:
     #     name: "{{ item.name }}"
@@ -20,5 +25,12 @@
       net_l3_interface:
         name: "{{ item.name }}"
         ipv4: "{{ item.ip }}"
+      when: item.ip | ipaddr
+      with_items: "{{ interfaces }}"
+
+    - name: Set loopback interface IP
+      net_l3_interface:
+        name: Loopback0
+        ipv4: "{{ loopback_cidr | ipsubnet(24, site_number) | ipaddr(1) | ipaddr('address') }}/32"
       when: item.ip | ipaddr
       with_items: "{{ interfaces }}"

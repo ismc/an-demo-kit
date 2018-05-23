@@ -4,5 +4,6 @@
   gather_facts: no
   tasks:
     - net_ping:
-        dest: "{{ hostvars[item].ansible_host }}"
+        dest: "{{ hostvars[item].private_ip_address }}"
+        source: loopback0
       with_items: "{{ groups.hosts | default([]) }}"

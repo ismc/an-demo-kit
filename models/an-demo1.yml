@@ -17,38 +17,30 @@ vpc_list:
     project: "{{ cloud_name }}"
     cidr: "{{ hub_cidr }}"
     networks:
-      - name: "mgmt.hub.{{ cloud_name }}"
+      - name: "outside.hub.{{ cloud_name }}"
         cidr: "{{ hub_cidr | ipsubnet(24, 0) }}"
         az: "{{ cloud_region }}a"
-      - name: "outside.hub.{{ cloud_name }}"
-        cidr: "{{ hub_cidr | ipsubnet(24, 1) }}"
-        az: "{{ cloud_region }}a"
       - name: "inside.hub.{{ cloud_name }}"
-        cidr: "{{ hub_cidr | ipsubnet(24, 2) }}"
+        cidr: "{{ hub_cidr | ipsubnet(24, 1) }}"
         az: "{{ cloud_region }}a"
         routes:
           - cidr: "10.0.0.0/8"
             instance: "rtr1.hub.{{ cloud_name }}"
-            if_index: 2
+            if_index: 1
     instances:
       - name: "rtr1.hub.{{ cloud_name }}"
         size: medium
         image: csr-byol
         interfaces:
           - name: GigabitEthernet1
-            subnet: "mgmt.hub.{{ cloud_name }}"
+            subnet: "outside.hub.{{ cloud_name }}"
             acl: rtr-acl
             public_ip: true
             private_ip: "{{ hub_cidr | ipsubnet(24, 0) | ipaddr(-2) | ipaddr('address') }}"
           - name: GigabitEthernet2
-            subnet: "outside.hub.{{ cloud_name }}"
-            acl: rtr-acl
-            public_ip: true
-            private_ip: "{{ hub_cidr | ipsubnet(24, 1) | ipaddr(-2) | ipaddr('address') }}"
-          - name: GigabitEthernet3
             subnet: "inside.hub.{{ cloud_name }}"
             acl: rtr-acl
-            private_ip: "{{ hub_cidr | ipsubnet(24, 2) | ipaddr(-2) | ipaddr('address') }}"
+            private_ip: "{{ hub_cidr | ipsubnet(24, 1) | ipaddr(-2) | ipaddr('address') }}"
         tags:
           Owner: "{{ cloud_name }}"
           network_os: ios
@@ -63,7 +55,7 @@ vpc_list:
             subnet: "inside.hub.{{ cloud_name }}"
             acl: host-acl
             public_ip: true
-            private_ip: "{{ hub_cidr | ipsubnet(24, 2) | ipaddr(10) | ipaddr('address') }}"
+            private_ip: "{{ hub_cidr | ipsubnet(24, 1) | ipaddr(10) | ipaddr('address') }}"
         tags:
           groups: hosts,control_hosts
   - name: "site1.{{ cloud_name }}"
@@ -72,38 +64,30 @@ vpc_list:
     project: "{{ cloud_name }}"
     cidr: "{{ site1_cidr }}"
     networks:
-      - name: "mgmt.site1.{{ cloud_name }}"
+      - name: "outside.site1.{{ cloud_name }}"
         cidr: "{{ site1_cidr | ipsubnet(24, 0) }}"
         az: "{{ cloud_region }}a"
-      - name: "outside.site1.{{ cloud_name }}"
-        cidr: "{{ site1_cidr | ipsubnet(24, 1) }}"
-        az: "{{ cloud_region }}a"
       - name: "inside.site1.{{ cloud_name }}"
-        cidr: "{{ site1_cidr | ipsubnet(24, 2) }}"
+        cidr: "{{ site1_cidr | ipsubnet(24, 1) }}"
         az: "{{ cloud_region }}a"
         routes:
           - cidr: "0.0.0.0/0"
             instance: "rtr1.site1.{{ cloud_name }}"
-            if_index: 2
+            if_index: 1
     instances:
       - name: "rtr1.site1.{{ cloud_name }}"
         size: medium
         image: csr-byol
         interfaces:
           - name: GigabitEthernet1
-            subnet: "mgmt.site1.{{ cloud_name }}"
+            subnet: "outside.site1.{{ cloud_name }}"
             acl: rtr-acl
             public_ip: true
             private_ip: "{{ site1_cidr | ipsubnet(24, 0) | ipaddr(-2) | ipaddr('address') }}"
           - name: GigabitEthernet2
-            subnet: "outside.site1.{{ cloud_name }}"
-            acl: rtr-acl
-            public_ip: true
-            private_ip: "{{ site1_cidr | ipsubnet(24, 1) | ipaddr(-2) | ipaddr('address') }}"
-          - name: GigabitEthernet3
             subnet: "inside.site1.{{ cloud_name }}"
             acl: rtr-acl
-            private_ip: "{{ site1_cidr | ipsubnet(24, 2) | ipaddr(-2) | ipaddr('address') }}"
+            private_ip: "{{ site1_cidr | ipsubnet(24, 1) | ipaddr(-2) | ipaddr('address') }}"
         tags:
           network_os: ios
           groups: network,routers,spoke_routers
@@ -115,7 +99,7 @@ vpc_list:
           - name: eth0
             subnet: "inside.site1.{{ cloud_name }}"
             acl: host-acl
-            private_ip: "{{ site1_cidr | ipsubnet(24, 2) | ipaddr(10) | ipaddr('address') }}"
+            private_ip: "{{ site1_cidr | ipsubnet(24, 1) | ipaddr(10) | ipaddr('address') }}"
         tags:
           groups: hosts
   - name: "site2.{{ cloud_name }}"
@@ -124,38 +108,30 @@ vpc_list:
     project: "{{ cloud_name }}"
     cidr: "{{ site2_cidr }}"
     networks:
-      - name: "mgmt.site2.{{ cloud_name }}"
+      - name: "outside.site2.{{ cloud_name }}"
         cidr: "{{ site2_cidr | ipsubnet(24, 0) }}"
         az: "{{ cloud_region }}a"
-      - name: "outside.site2.{{ cloud_name }}"
-        cidr: "{{ site2_cidr | ipsubnet(24, 1) }}"
-        az: "{{ cloud_region }}a"
       - name: "inside.site2.{{ cloud_name }}"
-        cidr: "{{ site2_cidr | ipsubnet(24, 2) }}"
+        cidr: "{{ site2_cidr | ipsubnet(24, 1) }}"
         az: "{{ cloud_region }}a"
         routes:
           - cidr: "0.0.0.0/0"
             instance: "rtr1.site2.{{ cloud_name }}"
-            if_index: 2
+            if_index: 1
     instances:
       - name: "rtr1.site2.{{ cloud_name }}"
         size: medium
         image: csr-byol
         interfaces:
           - name: GigabitEthernet1
-            subnet: "mgmt.site2.{{ cloud_name }}"
+            subnet: "outside.site2.{{ cloud_name }}"
             acl: rtr-acl
             public_ip: true
             private_ip: "{{ site2_cidr | ipsubnet(24, 0) | ipaddr(-2) | ipaddr('address') }}"
           - name: GigabitEthernet2
-            subnet: "outside.site2.{{ cloud_name }}"
-            acl: rtr-acl
-            public_ip: true
-            private_ip: "{{ site2_cidr | ipsubnet(24, 1) | ipaddr(-2) | ipaddr('address') }}"
-          - name: GigabitEthernet3
             subnet: "inside.site2.{{ cloud_name }}"
             acl: rtr-acl
-            private_ip: "{{ site2_cidr | ipsubnet(24, 2) | ipaddr(-2) | ipaddr('address') }}"
+            private_ip: "{{ site2_cidr | ipsubnet(24, 1) | ipaddr(-2) | ipaddr('address') }}"
         tags:
           network_os: ios
           groups: network,routers,spoke_routers
@@ -167,7 +143,7 @@ vpc_list:
           - name: eth0
             subnet: "inside.site2.{{ cloud_name }}"
             acl: host-acl
-            private_ip: "{{ site2_cidr | ipsubnet(24, 2) | ipaddr(10) | ipaddr('address') }}"
+            private_ip: "{{ site2_cidr | ipsubnet(24, 1) | ipaddr(10) | ipaddr('address') }}"
         tags:
           groups: hosts
 
