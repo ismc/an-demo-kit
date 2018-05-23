@@ -231,7 +231,7 @@ Resources:
 {% if cloud_interface_item.private_ip is defined %}
       PrivateIpAddresses:
       - PrivateIpAddress: {{ cloud_interface_item.private_ip }}
-        Primary: 'false'
+        Primary: 'true'
 {% endif %}{# cloud_interface_item.private_ip #}
       GroupSet:
       - Ref: {{ cloud_interface_item.acl | regex_replace('[^A-z0-9]', '') }}
