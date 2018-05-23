@@ -1,4 +1,6 @@
 ---
+sdwan_cidr: 10.0.0.0/8
+loopback_cidr: 10.254.0.0/16
 tunnel_cidr: 10.255.0.0/24
 tunnel_asn: 65000
 tunnel_key: kbNB2jtfKqBvQkzMTurL8RNvBJDEtuNp
